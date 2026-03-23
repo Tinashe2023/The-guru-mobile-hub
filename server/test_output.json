@@ -1,0 +1,51 @@
+{
+  "current": [
+    {
+      "id": 1,
+      "is_open": false,
+      "open_time": "11:00:00",
+      "close_time": "21:30:00",
+      "banking_status": "app_down",
+      "banking_message": null,
+      "recharge_airtel": false,
+      "recharge_vi": true,
+      "recharge_jio": false,
+      "printing_status": "offline",
+      "custom_message": null,
+      "updated_at": "2026-03-23T09:57:12.714Z",
+      "updated_by": "26afc55f-c522-4603-8976-9962a44ba0c2"
+    },
+    {
+      "id": 2,
+      "is_open": true,
+      "open_time": "11:00:00",
+      "close_time": "21:30:00",
+      "banking_status": "available",
+      "banking_message": null,
+      "recharge_airtel": true,
+      "recharge_vi": false,
+      "recharge_jio": true,
+      "printing_status": "available",
+      "custom_message": null,
+      "updated_at": "2026-03-23T09:53:31.758Z",
+      "updated_by": "26afc55f-c522-4603-8976-9962a44ba0c2"
+    }
+  ],
+  "result": [
+    {
+      "id": 1,
+      "is_open": false,
+      "open_time": "11:00:00",
+      "close_time": "21:30:00",
+      "banking_status": "app_down",
+      "banking_message": null,
+      "recharge_airtel": false,
+      "recharge_vi": true,
+      "recharge_jio": false,
+      "printing_status": "offline",
+      "custom_message": null,
+      "updated_at": "2026-03-23T09:57:47.881Z",
+      "updated_by": "26afc55f-c522-4603-8976-9962a44ba0c2"
+    }
+  ]
+}

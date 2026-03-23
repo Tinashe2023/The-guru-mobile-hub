@@ -46,7 +46,7 @@ router.put('/status', authenticate, requireAdmin, async (req, res) => {
     const queryText = `
       UPDATE shop_status SET
         ${updates.join(',\n        ')}
-      WHERE id = (SELECT id FROM shop_status LIMIT 1)
+      WHERE id = (SELECT id FROM shop_status ORDER BY id LIMIT 1)
       RETURNING *
     `;
 
