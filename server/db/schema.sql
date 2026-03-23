@@ -82,12 +82,28 @@ CREATE TABLE IF NOT EXISTS messages (
   sender_id UUID NOT NULL REFERENCES users(id),
   content TEXT,
   message_type VARCHAR(20) DEFAULT 'text'
-    CHECK (message_type IN ('text', 'file', 'image', 'system')),
+    CHECK (message_type IN ('text', 'file', 'image', 'system', 'sticker')),
   file_url VARCHAR(500),
   file_name VARCHAR(255),
   file_size INTEGER,
   is_read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  read_at TIMESTAMPTZ,
+  is_edited BOOLEAN DEFAULT FALSE,
+  edited_at TIMESTAMPTZ,
+  original_content TEXT,
+  reply_to_id UUID REFERENCES messages(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─── Message Reactions ───
+CREATE TABLE IF NOT EXISTS message_reactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  emoji VARCHAR(10) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(message_id, user_id, emoji)
 );
 
 -- ─── User Consents ───
@@ -190,6 +206,11 @@ CREATE TABLE IF NOT EXISTS products (
 -- ─── Indexes ───
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_read ON messages(is_read);
+CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_id);
+CREATE INDEX IF NOT EXISTS idx_message_reactions_message ON message_reactions(message_id);
+CREATE INDEX IF NOT EXISTS idx_message_reactions_user ON message_reactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_announcements_created ON announcements(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_repair_tickets_customer ON repair_tickets(customer_id);
 CREATE INDEX IF NOT EXISTS idx_repair_tickets_status ON repair_tickets(status);
