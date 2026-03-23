@@ -402,8 +402,10 @@ router.post("/messages/:id/reactions", authenticate, async (req, res) => {
       const io = req.app.get("io");
       io.to(`conversation:${conv.conversation_id}`).emit("reaction:added", {
         messageId,
-        reaction: result.rows[0],
-        userName: req.user.name,
+        reaction: {
+          ...result.rows[0],
+          user_name: req.user.name,
+        },
       });
     }
 
@@ -438,8 +440,10 @@ router.delete(
           "reaction:removed",
           {
             messageId,
-            reaction: result.rows[0],
-            userName: req.user.name,
+            reaction: {
+              ...result.rows[0],
+              user_name: req.user.name,
+            },
           },
         );
       }

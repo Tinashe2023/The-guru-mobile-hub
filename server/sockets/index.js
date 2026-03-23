@@ -103,8 +103,10 @@ export const setupSocketHandlers = (io) => {
             .to(`conversation:${conv.conversation_id}`)
             .emit("reaction:added", {
               messageId,
-              reaction: result.rows[0],
-              userName: socket.user.name,
+              reaction: {
+                ...result.rows[0],
+                user_name: socket.user.name,
+              },
             });
         }
       } catch (err) {
@@ -132,8 +134,10 @@ export const setupSocketHandlers = (io) => {
             .to(`conversation:${msg.rows[0].conversation_id}`)
             .emit("reaction:removed", {
               messageId,
-              reaction: result.rows[0],
-              userName: socket.user.name,
+              reaction: {
+                ...result.rows[0],
+                user_name: socket.user.name,
+              },
             });
         }
       } catch (err) {
