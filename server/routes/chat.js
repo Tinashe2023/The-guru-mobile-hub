@@ -165,8 +165,8 @@ router.post("/conversations/:id/messages", authenticate, async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO messages (conversation_id, sender_id, content, message_type)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
+      `INSERT INTO messages (conversation_id, sender_id, content, message_type, is_read)
+       VALUES ($1, $2, $3, $4, true) RETURNING *`,
       [convId, req.user.id, content.trim(), message_type || "text"],
     );
 

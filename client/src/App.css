@@ -948,7 +948,7 @@
 }
 
 .message-menu-btn {
-  opacity: 0;
+  opacity: 0.3;
   background: none;
   border: none;
   color: var(--outline);
