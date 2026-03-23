@@ -103,7 +103,7 @@ router.get("/conversations/:id/messages", authenticate, async (req, res) => {
 
     const result = await query(
       `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar, u.role as sender_role,
-       r.message_id as reply_to_id, ru.name as reply_sender_name, r.content as reply_content,
+       r.id as reply_to_id, ru.name as reply_sender_name, r.content as reply_content,
        (SELECT json_agg(json_build_object('emoji', mr.emoji, 'user_id', mr.user_id, 'user_name', mu.name))
         FROM message_reactions mr JOIN users mu ON mr.user_id = mu.id
         WHERE mr.message_id = m.id) as reactions
