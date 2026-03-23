@@ -729,124 +729,128 @@ const ChatPage = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="chat-input-bar">
-          <input
-            type="file"
-            ref={fileInputRef}
-            hidden
-            onChange={handleFileUpload}
-          />
-          <button
-            className="btn-icon"
-            style={{ color: "var(--primary-container)" }}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <span className="material-symbols-outlined">attach_file</span>
-          </button>
-          <button
-            className="btn-icon"
-            style={{ color: "var(--primary-container)" }}
-            onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
-          >
-            <span className="material-symbols-outlined">
-              sentiment_satisfied
-            </span>
-          </button>
-          <textarea
-            className="chat-textarea"
-            placeholder={t("chat.typePlaceholder")}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            id="chat-input"
-          />
-          <button
-            className="send-btn"
-            onClick={handleSend}
-            disabled={sending}
-            id="chat-send"
-          >
-            <span className="material-symbols-outlined icon-filled">send</span>
-          </button>
-        </div>
-
-        {/* Input Emoji Picker */}
-        {showInputEmojiPicker && (
-          <div className="input-emoji-picker">
-            {[
-              "😀",
-              "😂",
-              "😊",
-              "😍",
-              "🥰",
-              "😘",
-              "😉",
-              "😎",
-              "🤔",
-              "😮",
-              "😢",
-              "😡",
-              "🥺",
-              "😴",
-              "🤤",
-              "😇",
-              "👻",
-              "💀",
-              "👽",
-              "🤖",
-              "👍",
-              "👎",
-              "👌",
-              "✌️",
-              "🤞",
-              "👏",
-              "🙌",
-              "🤝",
-              "🙏",
-              "💪",
-              "❤️",
-              "💔",
-              "💕",
-              "💖",
-              "💯",
-              "🔥",
-              "⭐",
-              "✨",
-              "💫",
-              "🌟",
-              "🎉",
-              "🎊",
-              "🎈",
-              "🎁",
-              "🎂",
-              "🍰",
-              "🍿",
-              "🍕",
-              "🍔",
-              "🍟",
-              "🌮",
-              "🌯",
-              "🍜",
-              "🍝",
-              "🍣",
-              "🍱",
-              "🥤",
-              "☕",
-              "🍵",
-              "🥛",
-            ].map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => handleInsertEmoji(emoji)}
-                className="emoji-btn"
-              >
-                {emoji}
-              </button>
-            ))}
+        {/* Input Container */}
+        <div style={{ position: "relative" }}>
+          <div className="chat-input-bar">
+            <input
+              type="file"
+              ref={fileInputRef}
+              hidden
+              onChange={handleFileUpload}
+            />
+            <button
+              className="btn-icon"
+              style={{ color: "var(--primary-container)" }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="material-symbols-outlined">attach_file</span>
+            </button>
+            <button
+              className="btn-icon"
+              style={{ color: "var(--primary-container)" }}
+              onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
+            >
+              <span className="material-symbols-outlined">
+                sentiment_satisfied
+              </span>
+            </button>
+            <textarea
+              className="chat-textarea"
+              placeholder={t("chat.typePlaceholder")}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={1}
+              id="chat-input"
+            />
+            <button
+              className="send-btn"
+              onClick={handleSend}
+              disabled={sending}
+              id="chat-send"
+            >
+              <span className="material-symbols-outlined icon-filled">
+                send
+              </span>
+            </button>
           </div>
-        )}
+
+          {/* Input Emoji Picker */}
+          {showInputEmojiPicker && (
+            <div className="input-emoji-picker">
+              {[
+                "😀",
+                "😂",
+                "😊",
+                "😍",
+                "🥰",
+                "😘",
+                "😉",
+                "😎",
+                "🤔",
+                "😮",
+                "😢",
+                "😡",
+                "🥺",
+                "😴",
+                "🤤",
+                "😇",
+                "👻",
+                "💀",
+                "👽",
+                "🤖",
+                "👍",
+                "👎",
+                "👌",
+                "✌️",
+                "🤞",
+                "👏",
+                "🙌",
+                "🤝",
+                "🙏",
+                "💪",
+                "❤️",
+                "💔",
+                "💕",
+                "💖",
+                "💯",
+                "🔥",
+                "⭐",
+                "✨",
+                "💫",
+                "🌟",
+                "🎉",
+                "🎊",
+                "🎈",
+                "🎁",
+                "🎂",
+                "🍰",
+                "🍿",
+                "🍕",
+                "🍔",
+                "🍟",
+                "🌮",
+                "🌯",
+                "🍜",
+                "🍝",
+                "🍣",
+                "🍱",
+                "🥤",
+                "☕",
+                "🍵",
+                "🥛",
+              ].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleInsertEmoji(emoji)}
+                  className="emoji-btn"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }

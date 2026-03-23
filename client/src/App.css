@@ -1037,6 +1037,10 @@
 }
 
 .input-emoji-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-md);
@@ -1047,7 +1051,7 @@
   gap: 0.5rem;
   max-height: 200px;
   overflow-y: auto;
-  margin-top: 0.5rem;
+  z-index: 1000;
 }
   display: flex;
   flex-wrap: wrap;
