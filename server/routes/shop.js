@@ -17,28 +17,40 @@ router.get('/status', async (req, res) => {
 // ─── Update shop status (admin only) ───
 router.put('/status', authenticate, requireAdmin, async (req, res) => {
   try {
-    const {
-      is_open, banking_status, banking_message,
-      recharge_airtel, recharge_vi, recharge_jio,
-      printing_status, custom_message
-    } = req.body;
+    const allowedFields = [
+      'is_open', 'banking_status', 'banking_message',
+      'recharge_airtel', 'recharge_vi', 'recharge_jio',
+      'printing_status', 'custom_message'
+    ];
 
-    const result = await query(
-      `UPDATE shop_status SET
-        is_open = COALESCE($1, is_open),
-        banking_status = COALESCE($2, banking_status),
-        banking_message = COALESCE($3, banking_message),
-        recharge_airtel = COALESCE($4, recharge_airtel),
-        recharge_vi = COALESCE($5, recharge_vi),
-        recharge_jio = COALESCE($6, recharge_jio),
-        printing_status = COALESCE($7, printing_status),
-        custom_message = COALESCE($8, custom_message),
-        updated_at = NOW(),
-        updated_by = $9
-       WHERE id = (SELECT id FROM shop_status LIMIT 1)
-       RETURNING *`,
-      [is_open, banking_status, banking_message, recharge_airtel, recharge_vi, recharge_jio, printing_status, custom_message, req.user.id]
-    );
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates.push(`${field} = $${paramIndex}`);
+        values.push(req.body[field]);
+        paramIndex++;
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    updates.push(`updated_by = $${paramIndex}`);
+    values.push(req.user.id);
+
+    const queryText = `
+      UPDATE shop_status SET
+        ${updates.join(',\n        ')}
+      WHERE id = (SELECT id FROM shop_status LIMIT 1)
+      RETURNING *
+    `;
+
+    const result = await query(queryText, values);
 
     const status = result.rows[0];
 
