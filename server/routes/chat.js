@@ -1,0 +1,232 @@
+import express from 'express';
+import path from 'path';
+import { query } from '../config/db.js';
+import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { uploadDocument, generateStorageKey } from '../middleware/upload.js';
+import { uploadToB2, getPresignedUrl } from '../config/storage.js';
+
+const router = express.Router();
+
+// ─── Get conversations (for current user, or all for admin) ───
+router.get('/conversations', authenticate, async (req, res) => {
+  try {
+    let result;
+    if (req.user.role === 'admin') {
+      result = await query(
+        `SELECT c.*, u.name as customer_name, u.avatar_url as customer_avatar,
+         a.name as admin_name, a.avatar_url as admin_avatar,
+         (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+         (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND is_read = false AND sender_id != $1) as unread_count
+         FROM conversations c
+         JOIN users u ON c.customer_id = u.id
+         LEFT JOIN users a ON c.admin_id = a.id
+         ORDER BY c.last_message_at DESC`,
+        [req.user.id]
+      );
+    } else {
+      result = await query(
+        `SELECT c.*,
+         a.name as admin_name, a.avatar_url as admin_avatar,
+         (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+         (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND is_read = false AND sender_id != $1) as unread_count
+         FROM conversations c
+         LEFT JOIN users a ON c.admin_id = a.id
+         WHERE c.customer_id = $1
+         ORDER BY c.last_message_at DESC`,
+        [req.user.id]
+      );
+    }
+
+    const conversations = await Promise.all(result.rows.map(async (c) => {
+      if (c.customer_avatar && !c.customer_avatar.startsWith('http')) {
+        c.customer_avatar = await getPresignedUrl(c.customer_avatar, 86400);
+      }
+      if (c.admin_avatar && !c.admin_avatar.startsWith('http')) {
+        c.admin_avatar = await getPresignedUrl(c.admin_avatar, 86400);
+      }
+      return c;
+    }));
+
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to get conversations' });
+  }
+});
+
+// ─── Create conversation ───
+router.post('/conversations', authenticate, async (req, res) => {
+  try {
+    const { subject, admin_id } = req.body;
+
+    // Check if customer already has an active conversation with this specific admin (or general if null)
+    if (req.user.role !== 'admin') {
+      const existing = await query(
+        `SELECT id FROM conversations WHERE customer_id = $1 AND (($2::uuid IS NULL AND admin_id IS NULL) OR admin_id = $2) AND status = 'active'`,
+        [req.user.id, admin_id || null]
+      );
+      if (existing.rows.length > 0) {
+        return res.json(existing.rows[0]);
+      }
+    }
+
+    const result = await query(
+      `INSERT INTO conversations (customer_id, admin_id, subject)
+       VALUES ($1, $2, $3) RETURNING *`,
+      [req.user.id, admin_id || null, subject || 'Direct Support']
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create conversation' });
+  }
+});
+
+// ─── Get messages for a conversation ───
+router.get('/conversations/:id/messages', authenticate, async (req, res) => {
+  try {
+    const convId = req.params.id;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    // Verify access
+    const conv = await query('SELECT * FROM conversations WHERE id = $1', [convId]);
+    if (conv.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    if (req.user.role !== 'admin' && conv.rows[0].customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await query(
+      `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar, u.role as sender_role
+       FROM messages m
+       JOIN users u ON m.sender_id = u.id
+       WHERE m.conversation_id = $1
+       ORDER BY m.created_at ASC
+       LIMIT $2 OFFSET $3`,
+      [convId, limit, offset]
+    );
+
+    // Mark messages as read
+    await query(
+      `UPDATE messages SET is_read = true
+       WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false`,
+      [convId, req.user.id]
+    );
+
+    // Generate presigned URLs for file messages and avatars
+    const messages = await Promise.all(
+      result.rows.map(async (msg) => {
+        if (msg.message_type === 'file' && msg.file_url) {
+          msg.download_url = await getPresignedUrl(msg.file_url, 3600);
+        }
+        if (msg.sender_avatar && !msg.sender_avatar.startsWith('http')) {
+          msg.sender_avatar = await getPresignedUrl(msg.sender_avatar, 86400);
+        }
+        return msg;
+      })
+    );
+
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to get messages' });
+  }
+});
+
+// ─── Send a message ───
+router.post('/conversations/:id/messages', authenticate, async (req, res) => {
+  try {
+    const convId = req.params.id;
+    const { content, message_type } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+
+    // Verify access
+    const conv = await query('SELECT * FROM conversations WHERE id = $1', [convId]);
+    if (conv.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    if (req.user.role !== 'admin' && conv.rows[0].customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await query(
+      `INSERT INTO messages (conversation_id, sender_id, content, message_type)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [convId, req.user.id, content.trim(), message_type || 'text']
+    );
+
+    // Update conversation timestamp
+    await query('UPDATE conversations SET last_message_at = NOW() WHERE id = $1', [convId]);
+
+    // Fetch with sender info
+    const full = await query(
+      `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar, u.role as sender_role
+       FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = $1`,
+      [result.rows[0].id]
+    );
+
+    const message = full.rows[0];
+    if (message.sender_avatar && !message.sender_avatar.startsWith('http')) {
+      message.sender_avatar = await getPresignedUrl(message.sender_avatar, 86400);
+    }
+
+    // Socket.IO emit
+    const io = req.app.get('io');
+    io.to(`conversation:${convId}`).emit('message:new', message);
+
+    res.status(201).json(message);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// ─── Send a file message ───
+router.post('/conversations/:id/messages/file', authenticate, uploadDocument.single('file'), async (req, res) => {
+  try {
+    const convId = req.params.id;
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    // Verify access
+    const conv = await query('SELECT * FROM conversations WHERE id = $1', [convId]);
+    if (conv.rows.length === 0) return res.status(404).json({ error: 'Conversation not found' });
+    if (req.user.role !== 'admin' && conv.rows[0].customer_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+
+    // Upload to B2
+    const category = 'documents';
+    const storageKey = generateStorageKey(req.user.id, category, req.file.originalname);
+    await uploadToB2(req.file.buffer, storageKey, req.file.mimetype);
+
+    const result = await query(
+      `INSERT INTO messages (conversation_id, sender_id, message_type, file_url, file_name, file_size)
+       VALUES ($1, $2, 'file', $3, $4, $5) RETURNING *`,
+      [convId, req.user.id, storageKey, req.file.originalname, req.file.size]
+    );
+
+    await query('UPDATE conversations SET last_message_at = NOW() WHERE id = $1', [convId]);
+
+    const full = await query(
+      `SELECT m.*, u.name as sender_name, u.avatar_url as sender_avatar, u.role as sender_role
+       FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = $1`,
+      [result.rows[0].id]
+    );
+
+    const message = full.rows[0];
+    message.download_url = await getPresignedUrl(message.file_url, 3600);
+    if (message.sender_avatar && !message.sender_avatar.startsWith('http')) {
+      message.sender_avatar = await getPresignedUrl(message.sender_avatar, 86400);
+    }
+
+    const io = req.app.get('io');
+    io.to(`conversation:${convId}`).emit('message:new', message);
+
+    res.status(201).json(message);
+  } catch (err) {
+    console.error('Chat file upload err:', err);
+    res.status(500).json({ error: 'Failed to send file' });
+  }
+});
+
+export default router;

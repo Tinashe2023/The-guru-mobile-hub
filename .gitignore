@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment Variables (CRITICAL: Do not commit your passwords!)
+.env
+.env.local
+.env.development
+.env.production
+
+# Frontend Build Outputs
+/client/dist/
+
+# Backend Uploads
+/server/uploads/
+
+# OS and Editor Files
+.DS_Store
+Thumbs.db
+.vscode/

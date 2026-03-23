@@ -1,0 +1,30 @@
+[
+  {
+    "id": "b9e347df-aec3-400e-b4ab-23a1f6fa6e98",
+    "email": "handotinashe15@gmail.com",
+    "name": "Ruvarashe Chiwanza",
+    "password_hash": "$2a$12$Id2PeQPOf4/.OoFF0cF.S.487JbZ3zOfp.rEHl7iYf54EZH/4oLFW",
+    "avatar_url": null,
+    "role": "customer",
+    "google_id": null,
+    "language_pref": "en",
+    "phone": "0775025265",
+    "is_verified": true,
+    "created_at": "2026-03-20T12:55:05.943Z",
+    "updated_at": "2026-03-20T12:55:05.943Z"
+  },
+  {
+    "id": "26afc55f-c522-4603-8976-9962a44ba0c2",
+    "email": "tinashehando@gmail.com",
+    "name": "Ruvarashe Chiwanza",
+    "password_hash": "$2a$12$cThKRtWU7VLbKyg94hxF4OHX.EmKX5VntHKvUNU7Gnfh9kjtErDoS",
+    "avatar_url": "users/26afc55f-c522-4603-8976-9962a44ba0c2/avatars/avatar.jpg",
+    "role": "admin",
+    "google_id": null,
+    "language_pref": "en",
+    "phone": "9815781860",
+    "is_verified": true,
+    "created_at": "2026-03-20T12:37:13.513Z",
+    "updated_at": "2026-03-20T13:01:34.861Z"
+  }
+]
