@@ -1036,7 +1036,19 @@
   background: var(--surface-container-high);
 }
 
-.reactions-bar {
+.input-emoji-picker {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2rem, 1fr));
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;

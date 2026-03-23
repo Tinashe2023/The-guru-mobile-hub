@@ -23,6 +23,7 @@ const ChatPage = () => {
   const [editingMessage, setEditingMessage] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(null);
+  const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [showMessageMenu, setShowMessageMenu] = useState(null);
   useEffect(() => {
@@ -138,6 +139,12 @@ const ChatPage = () => {
       ) {
         setShowEmojiPicker(null);
       }
+      if (
+        !event.target.closest(".input-emoji-picker") &&
+        !event.target.closest(".btn-icon")
+      ) {
+        setShowInputEmojiPicker(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -248,6 +255,11 @@ const ChatPage = () => {
     } catch (err) {
       console.error("Failed to remove reaction:", err);
     }
+  };
+
+  const handleInsertEmoji = (emoji) => {
+    setNewMessage((prev) => prev + emoji);
+    setShowInputEmojiPicker(false);
   };
 
   const handleReply = (message) => {
@@ -735,9 +747,7 @@ const ChatPage = () => {
           <button
             className="btn-icon"
             style={{ color: "var(--primary-container)" }}
-            onClick={() => {
-              // TODO: Implement emoji picker
-            }}
+            onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
           >
             <span className="material-symbols-outlined">
               sentiment_satisfied
@@ -761,6 +771,82 @@ const ChatPage = () => {
             <span className="material-symbols-outlined icon-filled">send</span>
           </button>
         </div>
+
+        {/* Input Emoji Picker */}
+        {showInputEmojiPicker && (
+          <div className="input-emoji-picker">
+            {[
+              "😀",
+              "😂",
+              "😊",
+              "😍",
+              "🥰",
+              "😘",
+              "😉",
+              "😎",
+              "🤔",
+              "😮",
+              "😢",
+              "😡",
+              "🥺",
+              "😴",
+              "🤤",
+              "😇",
+              "👻",
+              "💀",
+              "👽",
+              "🤖",
+              "👍",
+              "👎",
+              "👌",
+              "✌️",
+              "🤞",
+              "👏",
+              "🙌",
+              "🤝",
+              "🙏",
+              "💪",
+              "❤️",
+              "💔",
+              "💕",
+              "💖",
+              "💯",
+              "🔥",
+              "⭐",
+              "✨",
+              "💫",
+              "🌟",
+              "🎉",
+              "🎊",
+              "🎈",
+              "🎁",
+              "🎂",
+              "🍰",
+              "🍿",
+              "🍕",
+              "🍔",
+              "🍟",
+              "🌮",
+              "🌯",
+              "🍜",
+              "🍝",
+              "🍣",
+              "🍱",
+              "🥤",
+              "☕",
+              "🍵",
+              "🥛",
+            ].map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => handleInsertEmoji(emoji)}
+                className="emoji-btn"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
