@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, fetchCsrfToken } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -10,7 +10,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
+    const init = async () => {
+      await fetchCsrfToken();
+      await checkAuth();
+    };
+    init();
   }, []);
 
   const checkAuth = async () => {
@@ -26,17 +30,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await authAPI.login({ email, password });
+    await fetchCsrfToken();
     setUser(data.user);
     return data;
   };
 
   const register = async (userData) => {
     const data = await authAPI.register(userData);
+    await fetchCsrfToken();
     setUser(data.user);
     return data;
   };
 
-  const loginWithPasskey = (data) => {
+  const loginWithPasskey = async (data) => {
+    await fetchCsrfToken();
     setUser(data.user);
   };
 

@@ -2,21 +2,30 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : "/api";
 
-const getCookie = (name) => {
-  const prefix = `${name}=`;
-  const value = document.cookie
-    .split(";")
-    .map((entry) => entry.trim())
-    .find((entry) => entry.startsWith(prefix));
-  return value ? decodeURIComponent(value.slice(prefix.length)) : "";
+let currentCsrfToken = "";
+
+export const fetchCsrfToken = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/auth/csrf`, {
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (data.csrfToken) {
+      currentCsrfToken = data.csrfToken;
+    }
+  } catch (err) {
+    console.error("Failed to fetch CSRF token", err);
+  }
 };
 
-const getHeaders = (method = "GET") => {
-  const headers = { "Content-Type": "application/json" };
+const getHeaders = (method = "GET", isFormData = false) => {
+  const headers = {};
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
   if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-    const csrfToken = getCookie("csrf_token");
-    if (csrfToken) {
-      headers["X-CSRF-Token"] = csrfToken;
+    if (currentCsrfToken) {
+      headers["X-CSRF-Token"] = currentCsrfToken;
     }
   }
   return headers;
@@ -77,6 +86,7 @@ export const userAPI = {
   uploadAvatar: (formData) =>
     fetch(`${API_BASE}/users/avatar`, {
       method: "POST",
+      headers: getHeaders("POST", true),
       body: formData,
       credentials: "include",
     }).then(handleResponse),
@@ -173,6 +183,7 @@ export const chatAPI = {
   sendFile: (convId, formData) =>
     fetch(`${API_BASE}/chat/conversations/${convId}/messages/file`, {
       method: "POST",
+      headers: getHeaders("POST", true),
       body: formData,
       credentials: "include",
     }).then(handleResponse),
@@ -247,6 +258,7 @@ export const documentAPI = {
   upload: (formData, type = "personal") =>
     fetch(`${API_BASE}/documents?type=${type}`, {
       method: "POST",
+      headers: getHeaders("POST", true),
       body: formData,
       credentials: "include",
     }).then(handleResponse),
