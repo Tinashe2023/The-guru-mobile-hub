@@ -111,7 +111,7 @@ router.get('/login/generate-options', async (req, res) => {
     res.cookie('webauthn_challenge', options.challenge, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 5 * 60 * 1000 // 5 mins
     });
 
@@ -170,7 +170,7 @@ router.post('/login/verify', async (req, res) => {
       res.cookie('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       issueCsrfCookie(res);
