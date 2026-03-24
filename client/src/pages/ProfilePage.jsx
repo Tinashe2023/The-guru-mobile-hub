@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { userAPI, webauthnAPI, documentAPI } from "../services/api";
 import { startRegistration } from "@simplewebauthn/browser";
+import { safeHref, safeImageSrc } from "../utils/safeUrl";
 
 const ProfilePage = () => {
   const { t } = useTranslation();
@@ -96,7 +97,7 @@ const ProfilePage = () => {
         <div className="profile-avatar-wrap">
           <div className="profile-avatar">
             {user?.avatar_url ? (
-              <img src={user.avatar_url} alt={user.name} />
+              <img src={safeImageSrc(user.avatar_url)} alt={user.name} />
             ) : (
               <div
                 style={{
@@ -410,7 +411,7 @@ const ProfilePage = () => {
                       </p>
                     </div>
                     <a
-                      href={doc.download_url}
+                      href={safeHref(doc.download_url)}
                       download
                       style={{
                         background: "none",

@@ -4,6 +4,7 @@ import { Server as SocketServer } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,14 +20,21 @@ import productRoutes from './routes/products.js';
 import webauthnRoutes from './routes/webauthn.js';
 import { setupSocketHandlers } from './sockets/index.js';
 import { startCleanupCron } from './utils/cleanup.js';
+import { enforceHttps, requireSameOrigin, csrfProtection } from './middleware/security.js';
+import { globalLimiter, authLimiter, strictAuthLimiter, uploadLimiter, chatLimiter } from './middleware/rateLimit.js';
+import { validateEnv } from './config/env.js';
 
 dotenv.config();
+validateEnv();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 
 // Socket.IO
 const io = new SocketServer(server, {
@@ -38,13 +46,29 @@ const io = new SocketServer(server, {
 });
 
 // Middleware
+app.use(helmet({
+  hsts: process.env.NODE_ENV === 'production' ? undefined : false,
+}));
+app.use(enforceHttps);
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(globalLimiter);
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
+app.use(requireSameOrigin);
+app.use(csrfProtection);
+
+// Route-specific rate limiting
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/google/callback', strictAuthLimiter);
+app.use('/api/webauthn/login/verify', strictAuthLimiter);
+app.use('/api/webauthn/register/verify', strictAuthLimiter);
+app.use('/api/chat', chatLimiter);
+app.use('/api/documents', uploadLimiter);
 
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

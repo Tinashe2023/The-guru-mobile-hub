@@ -4,6 +4,7 @@ import { query } from "../config/db.js";
 import { authenticate, requireAdmin } from "../middleware/auth.js";
 import { uploadDocument, generateStorageKey } from "../middleware/upload.js";
 import { uploadToB2, getPresignedUrl } from "../config/storage.js";
+import { validateQuery, paginationQuerySchema } from "../middleware/validate.js";
 
 const router = express.Router();
 
@@ -84,11 +85,11 @@ router.post("/conversations", authenticate, async (req, res) => {
 });
 
 // ─── Get messages for a conversation ───
-router.get("/conversations/:id/messages", authenticate, async (req, res) => {
+router.get("/conversations/:id/messages", authenticate, validateQuery(paginationQuerySchema), async (req, res) => {
   try {
     const convId = req.params.id;
-    const limit = parseInt(req.query.limit) || 50;
-    const offset = parseInt(req.query.offset) || 0;
+    const limit = req.query.limit ?? 50;
+    const offset = req.query.offset ?? 0;
 
     // Verify access
     const conv = await query("SELECT * FROM conversations WHERE id = $1", [

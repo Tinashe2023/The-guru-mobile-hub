@@ -7,7 +7,7 @@ export const authenticate = async (req, res, next) => {
     const token = authHeaderToken || req.cookies?.token;
 
     if (!token) {
-      console.log('🔴 Auth Error: No token provided in headers or cookies', { authHeader: req.headers.authorization, cookies: req.cookies });
+      console.log('🔴 Auth Error: No token provided in headers or cookies');
       return res.status(401).json({ error: 'Authentication required' });
     }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { productAPI } from '../services/api';
+import { safeImageSrc } from '../utils/safeUrl';
 
 const ProductsPage = () => {
   const { t } = useTranslation();
@@ -187,7 +188,7 @@ const ProductsPage = () => {
             <div key={product.id} className="product-card">
               <div className="product-image">
                 {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} />
+                  <img src={safeImageSrc(product.image_url)} alt={product.name} />
                 ) : (
                   <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--outline-variant)' }}>
                     {categoryList.find(c => c.value === product.category)?.icon || 'devices_other'}

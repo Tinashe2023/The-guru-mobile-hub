@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { documentAPI, userAPI } from '../services/api';
+import { safeHref } from '../utils/safeUrl';
 
 const DocumentsPage = () => {
   const { t } = useTranslation();
@@ -320,7 +321,7 @@ const DocumentsPage = () => {
               </div>
               <div className="doc-actions">
                 {doc.download_url && (
-                  <a href={doc.download_url} target="_blank" rel="noopener noreferrer" className="btn-icon" title={t('common.download')}>
+                  <a href={safeHref(doc.download_url)} target="_blank" rel="noopener noreferrer" className="btn-icon" title={t('common.download')}>
                     <span className="material-symbols-outlined">download</span>
                   </a>
                 )}

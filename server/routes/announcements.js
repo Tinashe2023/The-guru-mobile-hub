@@ -1,14 +1,15 @@
 import express from 'express';
 import { query } from '../config/db.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { validateQuery, paginationQuerySchema } from '../middleware/validate.js';
 
 const router = express.Router();
 
 // ─── Get announcements ───
-router.get('/', async (req, res) => {
+router.get('/', validateQuery(paginationQuerySchema), async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = parseInt(req.query.offset) || 0;
+    const limit = req.query.limit ?? 20;
+    const offset = req.query.offset ?? 0;
 
     const result = await query(
       `SELECT a.*, u.name as author_name, u.avatar_url as author_avatar, u.role as author_role

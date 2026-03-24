@@ -1,6 +1,2 @@
--- Run this SQL in your Neon Console SQL Editor:
-
-INSERT INTO users (email, name, password_hash, role, is_verified) VALUES
-  ('himanshi@gurumobilehub.com', 'Himanshi', '$2a$12$/0t2BhLlObcKwgt./P9iKeKJGOBv8gjZp2Mr9ktDdUr2XrzHHJN.q', 'admin', true),
-  ('guru@gurumobilehub.com', 'Guru', '$2a$12$P7w7l6fUVzsAmhHqCiPOSughi5bXBe6q75DwRSoJ7CcMPqfg/44gC', 'admin', true)
-ON CONFLICT (email) DO UPDATE SET role = 'admin', password_hash = EXCLUDED.password_hash;
+-- Sanitized example only. Do not commit real credentials or password hashes.
+-- Use environment-driven seeding with throwaway test users for local development.

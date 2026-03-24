@@ -1,12 +1,19 @@
 import jwt from "jsonwebtoken";
 import { query } from "../config/db.js";
 
+const getTokenFromCookieHeader = (cookieHeader = "") => {
+  return cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("token="))
+    ?.slice("token=".length);
+};
+
 export const setupSocketHandlers = (io) => {
   // Auth middleware for socket connections
   io.use(async (socket, next) => {
     try {
-      const token =
-        socket.handshake.auth?.token || socket.handshake.query?.token;
+      const token = getTokenFromCookieHeader(socket.handshake.headers?.cookie);
       if (!token) {
         return next(new Error("Authentication required"));
       }
@@ -40,8 +47,25 @@ export const setupSocketHandlers = (io) => {
     }
 
     // Join conversation rooms
-    socket.on("conversation:join", (conversationId) => {
-      socket.join(`conversation:${conversationId}`);
+    socket.on("conversation:join", async (conversationId) => {
+      try {
+        const conv = await query(
+          "SELECT customer_id, admin_id FROM conversations WHERE id = $1",
+          [conversationId],
+        );
+        if (conv.rows.length === 0) return;
+
+        const conversation = conv.rows[0];
+        const isAllowed =
+          socket.user.role === "admin" ||
+          conversation.customer_id === socket.user.id ||
+          conversation.admin_id === socket.user.id;
+
+        if (!isAllowed) return;
+        socket.join(`conversation:${conversationId}`);
+      } catch (err) {
+        console.error("Conversation join error:", err);
+      }
     });
 
     socket.on("conversation:leave", (conversationId) => {

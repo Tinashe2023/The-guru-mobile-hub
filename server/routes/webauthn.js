@@ -7,6 +7,7 @@ import {
 } from '@simplewebauthn/server';
 import { query } from '../config/db.js';
 import { authenticate, generateToken } from '../middleware/auth.js';
+import { issueCsrfCookie } from '../middleware/security.js';
 
 const router = express.Router();
 
@@ -172,11 +173,12 @@ router.post('/login/verify', async (req, res) => {
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+      issueCsrfCookie(res);
 
       res.clearCookie('webauthn_challenge');
 
       const { password_hash, current_challenge, ...safeUser } = user;
-      return res.json({ verified: true, user: safeUser, token });
+      return res.json({ verified: true, user: safeUser });
     }
 
     res.status(400).json({ error: 'Verification failed' });

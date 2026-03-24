@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket } from "../contexts/SocketContext";
 import { shopAPI, announcementAPI, serviceAPI } from "../services/api";
+import { safeImageSrc } from "../utils/safeUrl";
 
 const DashboardPage = () => {
   const { t } = useTranslation();
@@ -540,7 +541,7 @@ const DashboardPage = () => {
                       >
                         {ann.author_avatar ? (
                           <img
-                            src={ann.author_avatar}
+                            src={safeImageSrc(ann.author_avatar)}
                             alt={ann.author_name}
                             style={{
                               width: "100%",

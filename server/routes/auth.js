@@ -2,8 +2,11 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
 import { authenticate, generateToken } from '../middleware/auth.js';
+import { issueCsrfCookie, csrfTokenEndpoint } from '../middleware/security.js';
 
 const router = express.Router();
+
+router.get('/csrf', csrfTokenEndpoint);
 
 // ─── Register ───
 router.post('/register', async (req, res) => {
@@ -42,8 +45,9 @@ router.post('/register', async (req, res) => {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    issueCsrfCookie(res);
 
-    res.status(201).json({ user, token });
+    res.status(201).json({ user });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Registration failed' });
@@ -88,8 +92,9 @@ router.post('/login', async (req, res) => {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    issueCsrfCookie(res);
 
-    res.json({ user: safeUser, token });
+    res.json({ user: safeUser });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed' });
@@ -166,8 +171,9 @@ router.get('/google/callback', async (req, res) => {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    issueCsrfCookie(res);
 
-    res.redirect(`${process.env.CLIENT_URL}/dashboard?token=${token}`);
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
   } catch (err) {
     console.error('Google OAuth error:', err);
     res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
@@ -186,6 +192,9 @@ router.get('/me', authenticate, async (req, res) => {
       const { getPresignedUrl } = await import('../config/storage.js');
       user.avatar_url = await getPresignedUrl(user.avatar_url, 86400); // 24 hours
     }
+    if (!req.cookies?.csrf_token) {
+      issueCsrfCookie(res);
+    }
     res.json({ user });
   } catch (err) {
     console.error('Fetch /me error:', err);
@@ -196,6 +205,7 @@ router.get('/me', authenticate, async (req, res) => {
 // ─── Logout ───
 router.post('/logout', (req, res) => {
   res.clearCookie('token');
+  res.clearCookie('csrf_token');
   res.json({ message: 'Logged out' });
 });
 

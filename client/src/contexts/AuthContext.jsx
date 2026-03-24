@@ -15,25 +15,9 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      // Check for token in URL (from Google OAuth redirect)
-      const params = new URLSearchParams(window.location.search);
-      const urlToken = params.get('token');
-      if (urlToken) {
-        localStorage.setItem('token', urlToken);
-        // Clean the token from the URL without reloading
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, '', cleanUrl);
-      }
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
       const data = await authAPI.getMe();
       setUser(data.user);
     } catch {
-      localStorage.removeItem('token');
       setUser(null);
     } finally {
       setLoading(false);
@@ -42,20 +26,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await authAPI.login({ email, password });
-    localStorage.setItem('token', data.token);
     setUser(data.user);
     return data;
   };
 
   const register = async (userData) => {
     const data = await authAPI.register(userData);
-    localStorage.setItem('token', data.token);
     setUser(data.user);
     return data;
   };
 
   const loginWithPasskey = (data) => {
-    localStorage.setItem('token', data.token);
     setUser(data.user);
   };
 
@@ -65,7 +46,6 @@ export const AuthProvider = ({ children }) => {
     } catch {
       // ok
     }
-    localStorage.removeItem('token');
     setUser(null);
   };
 

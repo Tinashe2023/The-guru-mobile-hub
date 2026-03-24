@@ -1,30 +1,30 @@
 [
   {
-    "id": "b9e347df-aec3-400e-b4ab-23a1f6fa6e98",
-    "email": "handotinashe15@gmail.com",
-    "name": "Ruvarashe Chiwanza",
-    "password_hash": "$2a$12$Id2PeQPOf4/.OoFF0cF.S.487JbZ3zOfp.rEHl7iYf54EZH/4oLFW",
+    "id": "00000000-0000-4000-8000-000000000001",
+    "email": "customer@example.com",
+    "name": "Sample Customer",
+    "password_hash": "<redacted>",
     "avatar_url": null,
     "role": "customer",
     "google_id": null,
     "language_pref": "en",
-    "phone": "0775025265",
+    "phone": "<redacted>",
     "is_verified": true,
-    "created_at": "2026-03-20T12:55:05.943Z",
-    "updated_at": "2026-03-20T12:55:05.943Z"
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "updated_at": "2026-01-01T00:00:00.000Z"
   },
   {
-    "id": "26afc55f-c522-4603-8976-9962a44ba0c2",
-    "email": "tinashehando@gmail.com",
-    "name": "Ruvarashe Chiwanza",
-    "password_hash": "$2a$12$cThKRtWU7VLbKyg94hxF4OHX.EmKX5VntHKvUNU7Gnfh9kjtErDoS",
-    "avatar_url": "users/26afc55f-c522-4603-8976-9962a44ba0c2/avatars/avatar.jpg",
+    "id": "00000000-0000-4000-8000-000000000002",
+    "email": "admin@example.com",
+    "name": "Sample Admin",
+    "password_hash": "<redacted>",
+    "avatar_url": null,
     "role": "admin",
     "google_id": null,
     "language_pref": "en",
-    "phone": "9815781860",
+    "phone": "<redacted>",
     "is_verified": true,
-    "created_at": "2026-03-20T12:37:13.513Z",
-    "updated_at": "2026-03-20T13:01:34.861Z"
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "updated_at": "2026-01-01T00:00:00.000Z"
   }
 ]

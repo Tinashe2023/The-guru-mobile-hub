@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket } from "../contexts/SocketContext";
 import { chatAPI } from "../services/api";
+import { safeHref, safeImageSrc } from "../utils/safeUrl";
 
 const ChatPage = () => {
   const { t } = useTranslation();
@@ -331,7 +332,7 @@ const ChatPage = () => {
             {isAdmin ? (
               activeConv.customer_avatar ? (
                 <img
-                  src={activeConv.customer_avatar}
+                  src={safeImageSrc(activeConv.customer_avatar)}
                   alt="C"
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
@@ -340,7 +341,7 @@ const ChatPage = () => {
               )
             ) : activeConv.admin_avatar ? (
               <img
-                src={activeConv.admin_avatar}
+                src={safeImageSrc(activeConv.admin_avatar)}
                 alt="A"
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
@@ -475,7 +476,7 @@ const ChatPage = () => {
                       {showAvatar ? (
                         msg.sender_avatar ? (
                           <img
-                            src={msg.sender_avatar}
+                            src={safeImageSrc(msg.sender_avatar)}
                             alt={msg.sender_name}
                             style={{
                               width: "100%",
@@ -570,7 +571,7 @@ const ChatPage = () => {
                                   description
                                 </span>
                                 <a
-                                  href={msg.download_url}
+                                  href={safeHref(msg.download_url)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   style={{
@@ -948,7 +949,7 @@ const ChatPage = () => {
                 {isAdmin ? (
                   conv.customer_avatar ? (
                     <img
-                      src={conv.customer_avatar}
+                      src={safeImageSrc(conv.customer_avatar)}
                       alt="C"
                       style={{
                         width: "100%",
@@ -961,7 +962,7 @@ const ChatPage = () => {
                   )
                 ) : conv.admin_avatar ? (
                   <img
-                    src={conv.admin_avatar}
+                    src={safeImageSrc(conv.admin_avatar)}
                     alt="A"
                     style={{
                       width: "100%",

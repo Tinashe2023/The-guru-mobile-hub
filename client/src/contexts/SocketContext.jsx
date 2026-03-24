@@ -21,10 +21,9 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const token = localStorage.getItem('token');
     const socketUrl = import.meta.env.VITE_API_URL || '/';
     const newSocket = io(socketUrl, {
-      auth: { token },
+      withCredentials: true,
       transports: ['websocket', 'polling'],
     });
 
