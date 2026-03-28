@@ -22,6 +22,8 @@ const DashboardPage = () => {
   const [deletingAnn, setDeletingAnn] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showAdminDrawer, setShowAdminDrawer] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -50,6 +52,7 @@ const DashboardPage = () => {
   }, [socket]);
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [statusData, annData, serviceData] = await Promise.all([
         shopAPI.getStatus(),
@@ -61,6 +64,8 @@ const DashboardPage = () => {
       setServices(serviceData || []);
     } catch (err) {
       console.error("Dashboard load error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,121 +182,77 @@ const DashboardPage = () => {
 
   return (
     <div className="page">
-      {/* Admin Controls */}
+      {/* Admin Controls (Collapsible Drawer) */}
       {isAdmin && shopStatus && (
-        <div className="admin-controls animate-fade-in">
-          <div className="admin-badge">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "14px" }}
-            >
-              shield
-            </span>
+        <>
+          <button
+            className={`admin-drawer-toggle ${showAdminDrawer ? 'open' : ''}`}
+            onClick={() => setShowAdminDrawer(!showAdminDrawer)}
+            aria-label="Toggle admin controls"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>shield</span>
             Admin Controls
-          </div>
+            <span className="material-symbols-outlined">expand_more</span>
+          </button>
 
-          <div className="toggle-row">
-            <div className="toggle-info">
-              <span className="toggle-label">Shop Open/Closed</span>
-              <span className="toggle-desc">
-                Toggle the shop's operating status
-              </span>
+          <div className={`admin-drawer-content ${showAdminDrawer ? 'open' : ''}`}>
+            <div className="admin-controls animate-fade-in" style={{ marginBottom: '1.5rem' }}>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <span className="toggle-label">Shop Open/Closed</span>
+                  <span className="toggle-desc">Toggle the shop's operating status</span>
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={shopStatus.is_open} onChange={(e) => handleToggle("is_open", e.target.checked)} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-row">
+                <div className="toggle-info"><span className="toggle-label">Airtel Recharge</span></div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={shopStatus.recharge_airtel} onChange={(e) => handleToggle("recharge_airtel", e.target.checked)} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-row">
+                <div className="toggle-info"><span className="toggle-label">VI Recharge</span></div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={shopStatus.recharge_vi} onChange={(e) => handleToggle("recharge_vi", e.target.checked)} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-row">
+                <div className="toggle-info"><span className="toggle-label">Jio Recharge</span></div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={shopStatus.recharge_jio} onChange={(e) => handleToggle("recharge_jio", e.target.checked)} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-row" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+                <span className="toggle-label">Banking Status</span>
+                <select className="select" value={shopStatus.banking_status} onChange={(e) => handleToggle("banking_status", e.target.value)}>
+                  <option value="available">Available</option>
+                  <option value="app_down">App Down</option>
+                  <option value="network_issues">Network Issues</option>
+                  <option value="unavailable">Unavailable</option>
+                </select>
+              </div>
+
+              <div className="toggle-row" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+                <span className="toggle-label">Printing Status</span>
+                <select className="select" value={shopStatus.printing_status} onChange={(e) => handleToggle("printing_status", e.target.value)}>
+                  <option value="available">Available</option>
+                  <option value="busy">Busy</option>
+                  <option value="offline">Offline</option>
+                </select>
+              </div>
             </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={shopStatus.is_open}
-                onChange={(e) => handleToggle("is_open", e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </label>
           </div>
-
-          <div className="toggle-row">
-            <div className="toggle-info">
-              <span className="toggle-label">Airtel Recharge</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={shopStatus.recharge_airtel}
-                onChange={(e) =>
-                  handleToggle("recharge_airtel", e.target.checked)
-                }
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="toggle-row">
-            <div className="toggle-info">
-              <span className="toggle-label">VI Recharge</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={shopStatus.recharge_vi}
-                onChange={(e) => handleToggle("recharge_vi", e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="toggle-row">
-            <div className="toggle-info">
-              <span className="toggle-label">Jio Recharge</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={shopStatus.recharge_jio}
-                onChange={(e) => handleToggle("recharge_jio", e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div
-            className="toggle-row"
-            style={{
-              flexDirection: "column",
-              alignItems: "stretch",
-              gap: "0.5rem",
-            }}
-          >
-            <span className="toggle-label">Banking Status</span>
-            <select
-              className="select"
-              value={shopStatus.banking_status}
-              onChange={(e) => handleToggle("banking_status", e.target.value)}
-            >
-              <option value="available">Available</option>
-              <option value="app_down">App Down</option>
-              <option value="network_issues">Network Issues</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
-          </div>
-
-          <div
-            className="toggle-row"
-            style={{
-              flexDirection: "column",
-              alignItems: "stretch",
-              gap: "0.5rem",
-            }}
-          >
-            <span className="toggle-label">Printing Status</span>
-            <select
-              className="select"
-              value={shopStatus.printing_status}
-              onChange={(e) => handleToggle("printing_status", e.target.value)}
-            >
-              <option value="available">Available</option>
-              <option value="busy">Busy</option>
-              <option value="offline">Offline</option>
-            </select>
-          </div>
-        </div>
+        </>
       )}
 
       <div className="dashboard-grid">
@@ -407,23 +368,31 @@ const DashboardPage = () => {
           </div>
 
           <div className="services-grid" style={{ marginBottom: "1.5rem" }}>
-            {services.slice(0, 6).map((service) => (
-              <div key={service.id} className="service-card">
-                <div className="service-icon-wrap">
-                  <span className="material-symbols-outlined">
-                    {service.icon ||
-                      serviceIcons[service.category] ||
-                      "category"}
-                  </span>
-                </div>
-                <h4>{service.name}</h4>
-                {service.price && (
-                  <div className="service-price">
-                    {formatPrice(service.price, service.price_unit)}
+            {loading ? (
+              <>
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="skeleton dashboard-skeleton-card" />
+                ))}
+              </>
+            ) : (
+              services.slice(0, 6).map((service) => (
+                <div key={service.id} className="service-card">
+                  <div className="service-icon-wrap">
+                    <span className="material-symbols-outlined">
+                      {service.icon ||
+                        serviceIcons[service.category] ||
+                        "category"}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+                  <h4>{service.name}</h4>
+                  {service.price && (
+                    <div className="service-price">
+                      {formatPrice(service.price, service.price_unit)}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
           {/* Support Card */}
@@ -524,7 +493,13 @@ const DashboardPage = () => {
             )}
 
             <div className="feed-list">
-              {announcements.length === 0 ? (
+              {loading ? (
+                <>
+                  {[1,2,3].map(i => (
+                    <div key={i} className="skeleton dashboard-skeleton-feed" />
+                  ))}
+                </>
+              ) : announcements.length === 0 ? (
                 <div className="empty-state" style={{ padding: "2rem" }}>
                   <span className="material-symbols-outlined">campaign</span>
                   <p>No announcements yet</p>

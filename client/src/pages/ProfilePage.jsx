@@ -22,6 +22,16 @@ const ProfilePage = () => {
   const [showDocuments, setShowDocuments] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
 
+  // Dark mode
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('guru-theme') === 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
+    localStorage.setItem('guru-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -274,6 +284,36 @@ const ProfilePage = () => {
             add
           </span>
         </button>
+
+        <div className="profile-menu-item" style={{ cursor: 'default' }}>
+          <div className="profile-menu-left">
+            <div
+              className="profile-menu-icon"
+              style={{
+                background: darkMode ? 'var(--surface-container-high)' : 'var(--surface-container-highest)',
+                color: 'var(--on-surface)',
+              }}
+            >
+              <span className="material-symbols-outlined">
+                {darkMode ? 'dark_mode' : 'light_mode'}
+              </span>
+            </div>
+            <div>
+              <p className="profile-menu-label">Dark Mode</p>
+              <p className="profile-menu-desc">
+                {darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+              </p>
+            </div>
+          </div>
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={darkMode}
+              onChange={(e) => setDarkMode(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
 
         <button
           className="profile-menu-item"

@@ -27,6 +27,12 @@ const ChatPage = () => {
   const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [showMessageMenu, setShowMessageMenu] = useState(null);
+  // Typing indicator
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUser, setTypingUser] = useState(null);
+  const typingTimeoutRef = useRef(null);
+  // Conversation search
+  const [searchQuery, setSearchQuery] = useState('');
   useEffect(() => {
     loadConversations();
     if (!isAdmin) {
@@ -111,6 +117,14 @@ const ChatPage = () => {
       );
     });
 
+    // Typing indicator events
+    socket.on("typing_status", (data) => {
+      if (data.userId !== user.id) {
+        setIsTyping(data.isTyping);
+        setTypingUser(data.userName || 'Someone');
+      }
+    });
+
     return () => {
       socket.emit("conversation:leave", activeConv.id);
       socket.off("message:new");
@@ -119,6 +133,7 @@ const ChatPage = () => {
       socket.off("reaction:added");
       socket.off("reaction:removed");
       socket.off("messages:read");
+      socket.off("typing_status");
     };
   }, [socket, activeConv?.id]);
 
@@ -209,6 +224,18 @@ const ChatPage = () => {
       handleSend();
     }
   };
+
+  // Emit typing event on message change
+  const handleMessageChange = (e) => {
+    setNewMessage(e.target.value);
+    if (socket && activeConv) {
+      socket.emit('typing', { conversationId: activeConv.id, userId: user.id, userName: user.name, isTyping: true });
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit('typing', { conversationId: activeConv.id, userId: user.id, userName: user.name, isTyping: false });
+      }, 2000);
+    }
+  };
   // New handlers for advanced features
   const handleEditMessage = (message) => {
     setEditingMessage(message.id);
@@ -294,6 +321,13 @@ const ChatPage = () => {
         messageData.reply_to_id = replyingTo.id;
       }
       await chatAPI.sendMessage(activeConv.id, messageData);
+      
+      // Clear typing status immediately on send
+      if (socket && activeConv) {
+        socket.emit('typing', { conversationId: activeConv.id, userId: user.id, userName: user.name, isTyping: false });
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      }
+
       setNewMessage("");
       setReplyingTo(null);
     } catch (err) {
@@ -318,6 +352,7 @@ const ChatPage = () => {
         >
           <button
             className="btn-icon"
+            aria-label="Go back to conversations"
             onClick={() => {
               setActiveConv(null);
               loadConversations();
@@ -415,7 +450,7 @@ const ChatPage = () => {
               </span>
               <p>{replyingTo.content}</p>
             </div>
-            <button className="btn-icon" onClick={handleCancelReply}>
+            <button className="btn-icon" onClick={handleCancelReply} aria-label="Cancel reply">
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -425,13 +460,10 @@ const ChatPage = () => {
         <div className="chat-messages">
           {messages.map((msg, idx) => {
             const isMe = msg.sender_id === user.id;
-            const showAvatar =
-              !isMe &&
-              (idx === messages.length - 1 ||
-                messages[idx + 1]?.sender_id !== msg.sender_id);
-            const showName =
-              !isMe &&
-              (idx === 0 || messages[idx - 1]?.sender_id !== msg.sender_id);
+            const isClusterStart = idx === 0 || messages[idx - 1]?.sender_id !== msg.sender_id;
+            const isClusterEnd = idx === messages.length - 1 || messages[idx + 1]?.sender_id !== msg.sender_id;
+            const showAvatar = !isMe && isClusterStart;
+            const showName = !isMe && isClusterStart;
             const isEdited = msg.is_edited;
             const hasReactions = msg.reactions && msg.reactions.length > 0;
             const myReactions =
@@ -456,7 +488,7 @@ const ChatPage = () => {
                     gap: "0.5rem",
                     alignItems: "flex-end",
                     flexDirection: isMe ? "row-reverse" : "row",
-                    marginBottom: hasReactions ? "0.25rem" : "0.5rem",
+                    marginBottom: hasReactions ? "0.25rem" : (isClusterEnd ? "0.75rem" : "0.125rem"),
                   }}
                 >
                   {!isMe && (
@@ -714,10 +746,10 @@ const ChatPage = () => {
                       )}
                       {isMe && (
                         <span
-                          className={`read-status ${msg.is_read ? "read" : "sent"}`}
+                          className={`read-status ${msg.is_read ? "read" : msg.delivered_at ? "delivered" : "sent"}`}
                         >
                           <span className="material-symbols-outlined">
-                            done_all
+                            {msg.is_read || msg.delivered_at ? 'done_all' : 'done'}
                           </span>
                         </span>
                       )}
@@ -730,6 +762,16 @@ const ChatPage = () => {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Typing Indicator */}
+        {isTyping && (
+          <div className="typing-indicator">
+            <div className="typing-dots">
+              <span /><span /><span />
+            </div>
+            {typingUser || (isAdmin ? 'Customer' : 'Guru')} is typing...
+          </div>
+        )}
+
         {/* Input Container */}
         <div style={{ position: "relative" }}>
           <div className="chat-input-bar">
@@ -741,6 +783,7 @@ const ChatPage = () => {
             />
             <button
               className="btn-icon"
+              aria-label="Attach file"
               style={{ color: "var(--primary-container)" }}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -748,6 +791,7 @@ const ChatPage = () => {
             </button>
             <button
               className="btn-icon"
+              aria-label="Insert emoji"
               style={{ color: "var(--primary-container)" }}
               onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
             >
@@ -759,7 +803,7 @@ const ChatPage = () => {
               className="chat-textarea"
               placeholder={t("chat.typePlaceholder")}
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleMessageChange}
               onKeyDown={handleKeyDown}
               rows={1}
               id="chat-input"
@@ -857,6 +901,16 @@ const ChatPage = () => {
   }
 
   // Conversation List
+  const filteredConversations = conversations.filter((conv) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (conv.customer_name || '').toLowerCase().includes(q) ||
+      (conv.admin_name || '').toLowerCase().includes(q) ||
+      (conv.subject || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="page">
       <div className="section-header">
@@ -915,7 +969,22 @@ const ChatPage = () => {
         </div>
       )}
 
-      {conversations.length === 0 ? (
+      {/* Conversation Search */}
+      {conversations.length > 0 && (
+        <div className="conversation-search">
+          <span className="material-symbols-outlined">search</span>
+          <input
+            className="input"
+            type="text"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            id="conversation-search"
+          />
+        </div>
+      )}
+
+      {filteredConversations.length === 0 && !searchQuery ? (
         <div className="empty-state">
           <span className="material-symbols-outlined">chat_bubble</span>
           <h3>{t("chat.noConversations")}</h3>
@@ -932,7 +1001,7 @@ const ChatPage = () => {
         </div>
       ) : (
         <div className="ticket-list">
-          {conversations.map((conv) => (
+          {filteredConversations.map((conv) => (
             <div
               key={conv.id}
               className="ticket-card"

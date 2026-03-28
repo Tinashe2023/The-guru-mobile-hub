@@ -14,6 +14,8 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -93,20 +95,32 @@ const LoginPage = () => {
           <div className="input-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label className="input-label" style={{ marginBottom: 0 }}>{t('auth.password')}</label>
-              <a href="#" onClick={(e) => { e.preventDefault(); alert('For security, please contact the shop admin or visit us in person to reset your password.'); }} style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setShowForgotModal(true); }} style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
                 Forgot Password?
               </a>
             </div>
-            <input
-              className="input"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              id="login-password"
-            />
+            <div className="password-input-wrap">
+              <input
+                className="input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                id="login-password"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
           </div>
 
           <button className="btn btn-primary btn-full btn-lg" type="submit" disabled={loading} id="login-submit">
@@ -136,6 +150,49 @@ const LoginPage = () => {
           <Link to="/register">{t('auth.register')}</Link>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="forgot-modal-overlay" onClick={() => setShowForgotModal(false)}>
+          <div className="forgot-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Reset Your Password</h3>
+            <p>For security, password resets are handled in person or via our support team. Contact us through any of these channels:</p>
+
+            <div className="contact-row">
+              <span className="material-symbols-outlined">storefront</span>
+              Visit us at Lawgate, Phagwara
+            </div>
+            <div className="contact-row">
+              <span className="material-symbols-outlined">call</span>
+              Call the shop directly
+            </div>
+            <div className="contact-row">
+              <span className="material-symbols-outlined">chat</span>
+              Use the in-app live chat (after logging in)
+            </div>
+
+            <div className="forgot-modal-actions">
+              <button
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  setShowForgotModal(false);
+                  navigate('/chat');
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
+                Start Chat
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowForgotModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
